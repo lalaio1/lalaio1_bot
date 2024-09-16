@@ -1,0 +1,303 @@
+[
+    {
+        "name": "add_command",
+        "description": "Adiciona um novo comando à tabela de comandos do bot.",
+        "syntax": "L.add_command <nome> <descrição> <sintaxe> <exemplos...>",
+        "examples": [
+            "L.add_command greet Cumprimenta um usuário mencionado L.greet @usuário",
+            "L.add_command help Exibe ajuda sobre os comandos disponíveis L.help"
+        ]
+    },
+    {
+        "name": "encrypt",
+        "description": "Criptografa uma mensagem usando AES-GCM",
+        "syntax": "L.encrypt <mensagem>",
+        "examples": [
+            "L.encrypt Esta é uma mensagem secreta"
+        ]
+    },
+    {
+        "name": "decrypt",
+        "description": "Descriptografa uma mensagem previamente criptografada com AES-GCM",
+        "syntax": "L.decrypt <mensagem_criptografada>",
+        "examples": [
+            "L.decrypt c29tZSBzZWNyZXQgbWVzc2FnZQ=="
+        ]
+    },
+    {
+        "name": "gift",
+        "description": "Gera códigos para um serviço específico.",
+        "syntax": "L.gift <serviço>",
+        "examples": [
+            "L.gift amazon"
+        ]
+    },
+    {
+        "name": "ipinfo",
+        "description": "Obtém informações detalhadas de um endereço IP.",
+        "syntax": "L.ipinfo <endereço IP>",
+        "examples": [
+            "L.ipinfo 8.8.8.8"
+        ]
+    },
+    {
+        "name": "embed",
+        "description": "Cria um embed personalizado com uma cor específicL.",
+        "syntax": "L.embed <cor> <mensagem>",
+        "examples": [
+            "L.embed azul Olá, mundo!"
+        ]
+    },
+    {
+        "name": "dm",
+        "description": "Envia uma mensagem direta para um membro específico.",
+        "syntax": "L.dm <membro> <mensagem>",
+        "examples": [
+            "L.dm @Usuário Olá!"
+        ]
+    },
+    {
+        "name": "clear",
+        "description": "Exclui mensagens do canal atual.",
+        "syntax": "L.clear <quantidade>",
+        "examples": [
+            "L.clear 10"
+        ]
+    },
+    {
+        "name": "clear_all",
+        "description": "Limpa todas as mensagens do chat.",
+        "syntax": "L.clear_all",
+        "examples": [
+            "L.clear_all"
+        ]
+    },
+    {
+        "name": "search",
+        "description": "Pesquisa informações sobre um nome em sites de mídia social, data de nascimento, local de residência e e-mail.",
+        "syntax": "L.search <nome>",
+        "examples": [
+            "L.search John Doe"
+        ]
+    },
+    {
+        "name": "banir",
+        "description": "Bane um membro do servidor.",
+        "syntax": "L.banir <membro> [motivo]",
+        "examples": [
+            "L.banir @Usuário#1234",
+            "L.banir @Usuário#1234 motivo aqui"
+        ]
+    },
+    {
+        "name": "expulsar",
+        "description": "Expulsa um membro do servidor.",
+        "syntax": "L.expulsar <membro> [motivo]",
+        "examples": [
+            "L.expulsar @Usuário#1234",
+            "L.expulsar @Usuário#1234 motivo aqui"
+        ]
+    },
+    {
+        "name": "serverinfo",
+        "description": "Mostra informações sobre o servidor.",
+        "syntax": "L.serverinfo",
+        "examples": [
+            "L.serverinfo"
+        ]
+    },
+    {
+        "name": "wiki",
+        "description": "Pesquisa um termo na WikipediL.",
+        "syntax": "L.wiki <termo>",
+        "examples": [
+            "L.wiki Python",
+            "L.wiki Inteligência Artificial"
+        ]
+    },
+    {
+        "name": "info_user",
+        "description": "Mostra informações sobre um usuário do servidor.",
+        "syntax": "L.info_user [membro]",
+        "examples": [
+            "L.info_user @Usuário#1234",
+            "L.info_user"
+        ]
+    },
+    {
+        "name": "role_info",
+        "description": "Mostra informações detalhadas sobre um cargo do servidor.",
+        "syntax": "L.role_info <cargo>",
+        "examples": [
+            "L.role_info @Moderador",
+            "L.role_info Admin"
+        ]
+    },
+    {
+        "name": "channel_info",
+        "description": "Mostra informações detalhadas sobre um canal de texto do servidor.",
+        "syntax": "L.channel_info [canal]",
+        "examples": [
+            "L.channel_info #geral",
+            "L.channel_info"
+        ]
+    },
+    {
+        "name": "delete_webhook",
+        "description": "Deleta uma webhook através da sua URL.",
+        "syntax": "L.delete_webhook <webhook_url>",
+        "examples": [
+            "L.delete_webhook https://discord.com/api/webhooks/123456789/token"
+        ]
+    },
+    {
+        "name": "imagine",
+        "description": "Envia uma imagem correspondente à pesquisa através do Google Custom Search.",
+        "syntax": "L.imagine <termo_de_pesquisa>",
+        "examples": [
+            "L.imagine floresta"
+        ]
+    },
+    {
+        "name": "txt",
+        "description": "Cria e envia uma imagem com texto.",
+        "syntax": "L.txt [largura] [altura] <texto>",
+        "examples": [
+            "L.txt 600 300 Este é um exemplo de texto longo para criar uma imagem."
+        ]
+    },
+    {
+        "name": "lock",
+        "description": "Bloqueia o canal para não administradores.",
+        "syntax": "L.lock",
+        "examples": [
+            "L.lock"
+        ]
+    },
+    {
+        "name": "unlock",
+        "description": "Desbloqueia o canal para todos os membros.",
+        "syntax": "L.unlock",
+        "examples": [
+            "L.unlock"
+        ]
+    },
+    {
+        "name": "cep",
+        "description": "Busca informações sobre um CEP.",
+        "syntax": "L.cep <cep>",
+        "examples": [
+            "L.cep 12345-678",
+            "L.cep 54321-098"
+        ]
+    },
+    {
+        "name": "cnpj",
+        "description": "Busca informações sobre um CNPJ.",
+        "syntax": "L.cnpj <cnpj>",
+        "examples": [
+            "L.cnpj 12.345.678/0001-95",
+            "L.cnpj 12345678000195"
+        ]
+    },
+    {
+        "name": "qr",
+        "description": "Cria um código QR para a URL fornecidL.",
+        "syntax": "L.qr <url>",
+        "examples": [
+            "L.qr https://example.com",
+            "L.qr https://discord.com"
+        ]
+    },
+    {
+        "name": "gen",
+        "description": "Gera informações aleatórias de um usuário.",
+        "syntax": "L.gen [country]",
+        "examples": [
+            "L.gen",
+            "L.gen us",
+            "L.gen br"
+        ]
+    },
+    {
+        "name": "raid",
+        "description": "Inicia um bot para realizar uma ação de raid com um token fornecido.",
+        "syntax": "L.raid <token>",
+        "examples": [
+            "L.raid TOKEN_AQUI"
+        ]
+    },
+    {
+        "name": "get_html",
+        "description": "Obtém o código HTML de um site.",
+        "syntax": "L.get_html <url>",
+        "examples": [
+            "L.get_html https://example.com"
+        ]
+    },
+    {
+        "name": "get_buttons",
+        "description": "Obtém informações sobre os botões de um site.",
+        "syntax": "L.get_buttons <url>",
+        "examples": [
+            "L.get_buttons https://example.com"
+        ]
+    },
+    {
+        "name": "get_links",
+        "description": "Extrai todos os links de um site.",
+        "syntax": "L.get_links <url>",
+        "examples": [
+            "L.get_links https://example.com"
+        ]
+    },
+    {
+        "name": "tokeninfo",
+        "description": "Obtém informações detalhadas sobre um token Discord.",
+        "syntax": "L.tokeninfo <token>",
+        "examples": [
+            "L.tokeninfo DISCORD TOKEN"
+        ]
+    },
+    {
+        "name": "download",
+        "description": "Baixa um vídeo do YouTube.",
+        "syntax": "L.download <url>",
+        "examples": [
+            "L.download https://www.youtube.com/watch?v=video_id_here"
+        ]
+    },
+    {
+        "name": "invite",
+        "description": "Gera um convite personalizado para o servidor específico.",
+        "syntax": "L.invite",
+        "examples": [
+            "L.invite"
+        ]
+    },
+    {
+        "name": "clone",
+        "description": "Clona um site e extrai seus arquivos para uma pasta específica, compactando-os em um arquivo ZIP.",
+        "syntax": "L.clone <url> <output_folder>",
+        "examples": [
+            "L.clone https://example.com site_backup"
+        ]
+    },
+    {
+        "name": "extrair",
+        "description": "Extrai áudio de um vídeo do YouTube e fornece informações sobre o áudio extraído.",
+        "syntax": "L.extrair <url>",
+        "examples": [
+            "L.extrair https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        ]
+    },
+    {
+        "name": "avatar",
+        "description": "Mostra o avatar de um usuário do Discord.",
+        "syntax": "L.avatar [usuário]",
+        "examples": [
+            "L.avatar @usuário",
+            "L.avatar"
+        ]
+    }
+]

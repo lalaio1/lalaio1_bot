@@ -1,0 +1,356 @@
+bot_logs_channel_id = 1202613923510091776
+log_directory = './logs'
+bot_errors_log = f"{log_directory}/errorlogs.log"
+os.makedirs(log_directory, exist_ok=True)
+
+log_colors = {
+    "join": discord.Color.green(),
+    "leave": discord.Color.red(),
+    "command": discord.Color.blue(),
+    "response": discord.Color.gold(),
+    "error": discord.Color.red(),
+    "dm": discord.Color.purple(),
+    "info": discord.Color.default()
+}
+
+timezone = datetime.now().astimezone().tzinfo
+
+
+# -===== Comando de logs
+@bot.command()
+async def send_logs(ctx):
+    try:
+        with open(bot_errors_log, 'r', encoding='utf-8') as log_file:
+            logs_content = log_file.read()
+        await ctx.send(file=discord.File(bot_errors_log))
+    except FileNotFoundError:
+        await ctx.send("```[!] Arquivo de log não encontrado.```")
+
+@bot.command()
+async def clear_logs(ctx):
+    try:
+        with open(bot_errors_log, 'w', encoding='utf-8') as log_file:
+            log_file.write("") 
+
+        await ctx.send("```[!] Logs apagados com sucesso.```")
+
+    except FileNotFoundError:
+        await ctx.send("```[!] Arquivo de log não encontrado.```")
+
+
+@bot.event
+async def on_guild_join(guild):
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            try:
+                invite = await guild.text_channels[0].create_invite()
+            except discord.Forbidden:
+                invite = "Sem permissão para criar convite"
+
+            embed = discord.Embed(
+                title="Novo Servidor",
+                description=f"O bot foi adicionado a um novo servidor: **{guild.name}** ({guild.id})",
+                color=log_colors["join"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.set_thumbnail(url=guild.icon.url)
+            embed.add_field(name="Membros", value=f"Total: {guild.member_count}", inline=True)
+            embed.add_field(name="Convite", value=f"[Convite do Servidor]({invite})", inline=True)
+            embed.add_field(name="Proprietário", value=f"{guild.owner.mention}", inline=True)
+
+            await bot_logs_channel.send(embed=embed)
+
+
+@bot.event
+async def on_guild_remove(guild):
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            embed = discord.Embed(
+                title="Bot Removido do Servidor",
+                description=f"O bot foi removido do servidor: **{guild.name}** ({guild.id})",
+                color=log_colors["leave"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.set_thumbnail(url=guild.icon.url)
+            embed.add_field(name="Membros", value=f"Total: {guild.member_count}", inline=True)
+            await bot_logs_channel.send(embed=embed)
+
+
+@bot.event
+async def on_command(ctx):
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            message_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{ctx.message.id}"
+            
+            embed = discord.Embed(
+                title="Comando Executado",
+                description=f"{ctx.author.mention} executou o comando: {ctx.message.content}",
+                color=log_colors["command"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+            
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=ctx.guild.icon.url)
+                
+            embed.add_field(name="Servidor", value=f"{ctx.guild.name} ({ctx.guild.id})", inline=True)
+            embed.add_field(name="Canal", value=ctx.channel.mention, inline=True)
+            embed.add_field(name="Ir para Mensagem", value=f"[Mensagem]({message_link})", inline=True)
+
+            print(f'[!] {ctx.author} :: {ctx.message.content}')
+            await bot_logs_channel.send(embed=embed)
+            
+
+
+@bot.event
+async def on_command_completion(ctx):
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            response_text = ctx.message.content.replace(f'A.{ctx.command.name}', '').strip()
+
+            message_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{ctx.message.id}"
+            
+            embed = discord.Embed(
+                title="Resposta do Bot",
+                description=f"Em resposta ao comando de {ctx.author.mention}: [`{ctx.message.content}`]({message_link})",
+                color=log_colors["response"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.set_author(name=ctx.me.name, icon_url=ctx.me.avatar.url)
+            
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=ctx.guild.icon.url)
+                
+            embed.add_field(name="Servidor", value=f"{ctx.guild.name} ({ctx.guild.id})", inline=True)
+            embed.add_field(name="Canal", value=ctx.channel.mention, inline=True)
+            embed.add_field(name="Usuário", value=ctx.author.mention, inline=True)
+            
+            if response_text:
+                embed.add_field(name="Argumentos", value=(f'```{response_text}```'), inline=False)
+            
+            embed.add_field(name="Ir para Mensagem", value=f"[Mensagem]({message_link})", inline=True)
+            
+            await bot_logs_channel.send(embed=embed)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            error_name = type(error).__name__
+            error_details = str(error)
+            timestamp = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
+            
+            with open(bot_errors_log, "a") as log_file:
+                log_file.write(f"Timestamp: {timestamp}\n"
+                               f"Server: {ctx.guild.name} ({ctx.guild.id})\n"
+                               f"Channel: {ctx.channel.name} ({ctx.channel.id})\n"
+                               f"User: {ctx.author.name} ({ctx.author.id})\n"
+                               f"Command: {ctx.message.content}\n"
+                               f"Error: {error_name}: {error_details}\n\n")
+            
+            google_search_url = f"https://www.google.com/search?q={quote_plus(error_name)}"
+            error_message = (
+                f"Ocorreu um erro ao executar o comando `{ctx.message.content}`.\n"
+                f"Nome do Erro: {error_name}\n"
+                f"Descrição do Erro: {error_details}\n"
+                f"**[Pesquisar no Google]({google_search_url})**"
+            )
+
+            message_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{ctx.message.id}"
+
+            embed = discord.Embed(
+                title="❌ Erro ao Executar Comando",
+                description=error_message,
+                color=log_colors["error"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.set_footer(text=f"ID do Servidor: {ctx.guild.id} • ID do Canal: {ctx.channel.id} • ID do Usuário: {ctx.author.id}")
+            embed.add_field(name="Nome do Erro", value=f"```{error_name}```", inline=False)
+            embed.add_field(name="Servidor", value=f"{ctx.guild.name} ({ctx.guild.id})", inline=False)
+            embed.add_field(name="Canal", value=ctx.channel.mention, inline=False)
+            embed.add_field(name="Usuário", value=ctx.author.mention, inline=False)
+            embed.add_field(name="Comando", value=f"```{ctx.message.content}```", inline=False)
+            embed.add_field(name="Descrição", value=f"```{error_details}```", inline=False)
+            embed.add_field(name="Ir para Mensagem", value=f"[Mensagem]({message_link})", inline=True)
+            
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=ctx.guild.icon.url)
+
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+
+            await bot_logs_channel.send(embed=embed)
+
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    
+    if isinstance(message.channel, discord.DMChannel):
+        if bot_logs_channel_id:
+            bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+            if bot_logs_channel:
+                shared_guilds = [guild.name for guild in bot.guilds if guild.get_member(message.author.id)]
+                shared_guilds_str = '\n'.join(shared_guilds) if shared_guilds else "Nenhum servidor compartilhado"
+                
+                embed = discord.Embed(
+                    title="📩 Mensagem Recebida no Privado",
+                    description=f'```fix\n{message.content}\n```' if message.content else "Mensagem com Anexos",
+                    color=log_colors["dm"],
+                    timestamp=message.created_at.astimezone(timezone)
+                )
+                embed.set_author(name=message.author.name, icon_url=message.author.avatar.url)
+                embed.set_thumbnail(url=message.author.avatar.url)
+                embed.add_field(name="Usuário", value=f'```{message.author.name}```', inline=True)
+                embed.add_field(name="ID do Usuário", value=f'```{message.author.id}```', inline=True)
+                embed.add_field(name="Conta Criada Em", value=f'```{message.author.created_at.astimezone(timezone).strftime("%d/%m/%Y %H:%M:%S")}```', inline=False)
+                embed.add_field(name="Servidores Compartilhados", value=f'```{shared_guilds_str}```', inline=False)
+                
+                if message.attachments:
+                    attachment_counts = {}
+                    for i, attachment in enumerate(message.attachments, start=1):
+                        if attachment.url in attachment_counts:
+                            attachment_counts[attachment.url] += 1
+                        else:
+                            attachment_counts[attachment.url] = 1
+
+                        duplicate_info = (
+                            f"\n```Este anexo foi enviado {attachment_counts[attachment.url]} vezes na mesma mensagem```"
+                            if attachment_counts[attachment.url] > 1 else ""
+                        )
+
+                        embed.add_field(
+                            name=f"Anexo {i}",
+                            value=f'```{attachment.url}```{duplicate_info}',
+                            inline=False
+                        )
+                
+                embed.set_footer(text="Mensagem recebida no privado 🏡")
+                await bot_logs_channel.send(embed=embed)
+    
+    await bot.process_commands(message)
+
+
+@bot.event
+async def on_ready():
+    print(banner_quando_liga_fds)
+    #############################################################################   pode_nao_man()
+
+    if bot_logs_channel_id:
+        bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+        if bot_logs_channel:
+            guild_count = len(bot.guilds)
+            member_count = sum([guild.member_count for guild in bot.guilds])
+            command_count = len(bot.commands)
+
+            embed = discord.Embed(
+                title="Bot Reiniciado",
+                description="O bot foi reiniciado e está pronto para uso.",
+                color=log_colors["info"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.add_field(name="Nome do Bot", value=bot.user.name, inline=False)
+            embed.add_field(name="ID do Bot", value=bot.user.id, inline=False)
+            embed.add_field(name="Servidores Conectados", value=f"{guild_count} servidores", inline=False)
+            embed.add_field(name="Membros Conectados", value=f"{member_count} membros", inline=False)
+            embed.add_field(name="Quantidade de Comandos", value=f"{command_count} comandos", inline=False)
+            embed.set_thumbnail(url=bot.user.avatar.url)
+            
+            await bot_logs_channel.send(embed=embed)
+            try:
+                synced = await bot.tree.sync()
+                print(f'Sincronizados {len(synced)} comandos')
+            except Exception as e:
+                print(e)
+
+    guild = discord.utils.get(bot.guilds, id=1201687455527342091)
+    if guild is None:
+        print("Servidor não encontrado.")
+        return
+
+    voice_channel = discord.utils.get(guild.voice_channels, id=1267582290301550644)
+    if voice_channel is None:
+        print("Canal de voz não encontrado.")
+        return
+
+    await voice_channel.edit(name=f"STATUS L1 BOT {'🟢' if bot.is_ready() else '🔴'}")
+
+    async def update_voice_channel_status():
+        while True:
+            await voice_channel.edit(name=f"STATUS L1 BOT {'🟢' if bot.is_ready() else '🔴'}")
+            await asyncio.sleep(60)  
+
+    bot.loop.create_task(update_voice_channel_status())
+
+    await update_presence()
+    await monitor_resources()
+
+
+async def monitor_resources():
+    bot_logs_channel = bot.get_channel(bot_logs_channel_id)
+    if bot_logs_channel:
+        while not bot.is_closed():
+            cpu_percent = psutil.cpu_percent(interval=1)
+            mem_percent = psutil.virtual_memory().percent
+            disk_percent = psutil.disk_usage('/').percent
+            cpu_temp = get_cpu_temperature()
+            gpu_usage, gpu_temp = get_gpu_usage_and_temp()
+            ping = round(bot.latency * 1000)
+
+            embed = discord.Embed(
+                title="Monitoramento de Recursos",
+                description="Atualização de uso de CPU, Memória, Disco, Temperatura do Host e Ping",
+                color=log_colors["info"],
+                timestamp=datetime.now(timezone)
+            )
+            embed.add_field(name="Uso de CPU", value=f"{cpu_percent:.2f}%", inline=True)
+            embed.add_field(name="Temperatura da CPU", value=f"{cpu_temp}°C", inline=True)
+            embed.add_field(name="Uso de Memória", value=f"{mem_percent:.2f}%", inline=True)
+            embed.add_field(name="Uso de Disco", value=f"{disk_percent:.2f}%", inline=True)
+            embed.add_field(name="Uso da GPU", value=f"{gpu_usage}%" if gpu_usage != "N/A" else "N/A", inline=True)
+            embed.add_field(name="Temperatura da GPU", value=f"{gpu_temp}°C" if gpu_temp != "N/A" else "N/A", inline=True)
+            embed.add_field(name="Ping do Bot", value=f"{ping} ms", inline=True)
+            embed.set_thumbnail(url="https://cdn.discordapp.com/app-icons/1215660441909465088/a17fa7665b1a81bea28b023ab7df3248.png")   
+            embed.set_footer(text="Atualizado a cada 5 horas")
+
+            await bot_logs_channel.send(embed=embed)
+            await asyncio.sleep(18000)
+
+def get_cpu_temperature():
+    try:
+        if psutil.sensors_temperatures():
+            temperatures = psutil.sensors_temperatures()
+            if 'coretemp' in temperatures:
+                return temperatures['coretemp'][0].current
+            elif 'cpu_thermal' in temperatures:
+                return temperatures['cpu_thermal'][0].current
+    except Exception:
+        pass
+    return "N/A"
+
+
+def get_gpu_usage_and_temp():
+    try:
+        import GPUtil
+        gpus = GPUtil.getGPUs()
+        if gpus:
+            gpu = gpus[0]
+            return gpu.load * 100, gpu.temperature
+    except Exception:
+        pass
+    return "N/A", "N/A"
+
+async def update_presence():
+    activity = discord.Streaming(name="lalaio1.github.io", url="https://www.twitch.tv/lalaio1_bot")  
+    await bot.change_presence(status=discord.Status.dnd, activity=activity) 
+
+GAME_NAME = "lalaio1.github.io"
+RICH_PRESENCE_INVITE_IMAGE_URL = "https://cdn.discordapp.com/app-icons/1215660441909465088/a17fa7665b1a81bea28b023ab7df3248.png"
+
+

@@ -1,0 +1,285 @@
+invalid_codes = set()
+
+invalid_codes_list = [set()]
+
+@bot.commandname='boost', help='-Gera códigos Discord Nitro e envia os códigos válidos como uma mensagem')
+async def boost(ctx, num: int):
+    global invalid_codes_list
+    await ctx.send("***Seus códigos Nitro estão sendo gerados, seja paciente se você inseriu um número alto!***")
+    start = time.time()
+    invalid_count = 0
+    valid_found = False
+    estimate_message = None
+    characters = np.array(list(string.ascii_uppercase + string.digits + string.ascii_lowercase))
+    for i in range(num):
+        code = ''.join(np.random.choice(characters, size=16))
+        if any(code in invalid_codes for invalid_codes in invalid_codes_list):
+            continue
+
+        nitro = f"https://discord.gift/{code}"
+        url = f"https://discordapp.com/api/v6/entitlements/gift-codes/{code}?with_application=false&with_subscription_plan=true"
+        r = requests.get(url)
+
+        if r.status_code == 200:
+            print(f"\033[92mVálido | {nitro}\033[0m")
+            await ctx.send(f"{ctx.author.mention} Válido | {nitro} | Inválidos: {invalid_count} | Tempo: {time.time() - start:.2f}s")
+            valid_found = True
+            break
+        else:
+            invalid_count += 1
+            invalid_codes_list[-1].add(code)
+            if len(invalid_codes_list[-1]) >= 4500:
+                invalid_codes_list.append(set())
+
+        if (i+1) % 75 == 0:
+            elapsed_time = time.time() - start
+            avg_time_per_code = elapsed_time / (i+1)
+            remaining_time = avg_time_per_code * (num - i - 1)
+            remaining_time_str = str(timedelta(seconds=int(remaining_time)))
+            codes_per_minute = 60 / avg_time_per_code
+            speed_str = f"{avg_time_per_code * 1000:.2f}ms/código"
+            if estimate_message is None:
+                estimate_message = await ctx.send(f"Códigos/minuto: {codes_per_minute:.2f} | Tempo restante estimado: {remaining_time_str} | Velocidade: {speed_str}")
+            else:
+                await estimate_message.edit(content=f"Códigos/minuto: {codes_per_minute:.2f} | Tempo restante estimado: {remaining_time_str} | Velocidade: {speed_str}")
+
+    if not valid_found:
+        await ctx.send("**Nenhum código válido foi encontrado. A chance de vir um boost válido é extremamente baixa :l não ponha a culpa em mim, isso realmente funciona.**")
+
+
+
+
+invalid_codes_list = [set()]
+
+SCRAPER_API_KEY = ''
+
+def get_scraperapi_proxy():
+    url = f'http://api.scraperapi.com/?api_key={SCRAPER_API_KEY}&url=https://httpbin.org/ip'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        proxy = data['origin']
+        return proxy
+    else:
+        print('Erro ao obter proxy da ScraperAPI')
+        return None
+
+@bot.commandname='boost_all')
+async def boost_all(ctx):
+    global invalid_codes_list
+    await ctx.send("**Seus códigos Nitro estão sendo gerados, seja paciente!**")
+    start = time.time()
+    invalid_count = 0
+    valid_found = False
+    estimate_message = None
+    i = 0
+    characters = np.array(list(string.ascii_uppercase + string.digits + string.ascii_lowercase))
+    while not valid_found:
+        code = ''.join(np.random.choice(characters, size=16))
+        if code in invalid_codes_list[-1]:
+            continue
+        nitro = f"https://discord.gift/{code}"
+        url = f"https://discord.com/api/v6/entitlements/gift-codes/{code}?with_application=false&with_subscription_plan=true"
+        if invalid_count < 40:
+            r = requests.get(url)
+        else:
+            proxy = get_scraperapi_proxy()
+            if proxy:
+                proxy_dict = {
+                    'http': f'http://{proxy}',
+                    'https': f'https://{proxy}'
+                }
+            else:
+                proxy_dict = None
+            r = requests.get(url, proxies=proxy_dict)
+        if r.status_code == 200:
+            print(f"\033[92mVálido | {nitro}\033[0m")
+            await ctx.send(f"{ctx.author.mention} Válido | {nitro} | Inválidos: {invalid_count} | Tempo: {time.time() - start:.2f}s")
+            valid_found = True
+            break
+        else:
+            invalid_count += 1
+            invalid_codes_list[-1].add(code)
+            if len(invalid_codes_list[-1]) >= 4500:
+                invalid_codes_list.append(set())
+
+        if (i+1) % 100 == 0:
+            elapsed_time = time.time() - start
+            avg_time_per_code = elapsed_time / (i+1)
+            codes_per_minute = 60 / avg_time_per_code
+            speed_str = f"{avg_time_per_code * 1000:.2f}ms/código"
+            if estimate_message is None:
+                estimate_message = await ctx.send(f"Códigos/minuto: {codes_per_minute:.2f} | Velocidade: {speed_str}")
+            else:
+                await estimate_message.edit(content=f"Códigos/minuto: {codes_per_minute:.2f} | Velocidade: {speed_str}")
+        i += 1
+        
+        
+    
+@bot.commandname='dmall', help='Envia uma mensagem direta para todos os membros')
+async def dmall(ctx, *, message: str):
+    for member in ctx.guild.members:
+        if not member.bot:
+            try:
+                await member.send(message)
+                print(f"Mensagem enviada para {member.name}")
+            except Exception as e:
+                print(f"***Erro ao enviar mensagem para {member.name}: {e}***")
+    await ctx.send(f"***Mensagem enviada para todos os membros.***")
+
+
+
+intervals = 60
+
+@bot.commandname='startpromotions', help='Inicia o envio de mensagens promocionais')
+async def start_promotions(ctx):
+    send_promotional_messages.start()
+    await ctx.send('```Diff\n+Envio de mensagens promocionais iniciado 🚀```')
+
+@bot.commandname='stoppromotions', help='Para o envio de mensagens promocionais')
+async def stop_promotions(ctx):
+    send_promotional_messages.cancel()
+    await ctx.send('```Diff\n-Envio de mensagens promocionais parado ⛔```')
+    
+
+@tasks.loop(seconds=60)
+async def send_promotional_messages():
+    interval = random.choice(intervals)
+    await asyncio.sleep(interval * 1)
+
+    member = get_random_member()
+    if member:
+        if member.guild.me.guild_permissions.send_messages:
+            try:
+                embed = discord.Embed(
+                    title='🤖 Destaque Bot 2024 🤖',
+                    description=(
+                        '➤ **Funcionalidades Aprimoradas**\n'
+                        '➤ Desempenho Otimizado para Diversos Servidores\n'
+                        '➤ Reconhecido como o Melhor Bot Discord\n'
+                        '➤ Oportunidades para Integrar a Equipe de Desenvolvimento\n'
+                        '➤ Prefixo: `A.`\n'
+                        '➤ Comandos Exclusivos para uma Experiência Única\n'
+                        '➤ Bot Ativo e Sempre Atualizado\n'
+                        '➤ Convite Permanente para Convidados (Convide 2 amigos)\n'
+                        '═════════════════════\n'
+                        '🌟 **Destaques do Nosso Bot**\n'
+                        '🌟 Suporte 24 horas por dia\n'
+                        '═════════════════════\n'
+                        '🚀 [Convite do Servidor](https://discord.gg/bNBPZ9Yt)\n'
+                        '🤖 [Convide nosso BoT](https://discord.com/oauth2/authorize?client_id=1183076263582253208&scope=bot&permissions=8)\n'
+                        '🌐 [Nosso site](https://lalaio1.github.io)'
+                        '```Diff\n-essa e so mensagem promocional, por favor entre no linck ou ignore :D```'
+                    ),
+                    color=0xFFFFFF  
+                )
+
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                image_path = os.path.join('images', 'funcao.png')
+
+                if os.path.isfile(image_path):
+                    embed.set_thumbnail(url=f'attachment://{os.path.basename(image_path)}')
+
+                await member.send(embed=embed, file=discord.File(image_path))
+
+                log_channel_id = 1183529967372472362
+                log_channel = bot.get_channel(log_channel_id)
+
+                if log_channel:
+                    log_embed = discord.Embed(
+                        title='Mensagem Promocional Enviada',
+                        description=f'Mensagem promocional enviada para {member.display_name} ({member.id})',
+                        color=0x00ff00  
+                    )
+                    if member.avatar:
+                        log_embed.set_thumbnail(url=member.avatar.url)
+                    log_embed.add_field(name='Servidor do Membro', value=member.guild.name, inline=False)
+                    log_embed.add_field(name='Intervalo', value=f'{interval} minutos', inline=False)
+                    log_embed.add_field(name='Hora do Envio', value=current_time, inline=False)
+
+                    await log_channel.send(embed=log_embed)
+
+            except discord.errors.Forbidden:
+                print(f"Permissão insuficiente para enviar mensagem para {member.display_name} ({member.id}).")
+        else:
+            print(f"Permissão insuficiente para enviar mensagem em {member.guild.name}.")
+
+@send_promotional_messages.before_loop
+async def before_send_promotional_messages():
+    await bot.wait_until_ready()
+
+def get_random_member():
+    all_members = [member for guild in bot.guilds for member in guild.members if not member.bot]
+    return random.choice(all_members) if all_members else None
+
+        
+
+
+class SupportServerButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.link, label='Entre no servidor de suporte', url='https://discord.gg/tbh2yrat')
+
+class AddBotButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.link, label='Adicione o bot ao seu servidor', url='https://discord.com/oauth2/authorize?client_id=1192539471086895306&permissions=8&scope=bot')
+
+class MyView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(SupportServerButton())
+        self.add_item(AddBotButton())
+
+
+@bot.command)
+async def divulgar(ctx, server_id: int = None):
+    await ctx.message.delete()
+
+    await ctx.author.send("A divulgação foi ativada!")
+
+    images = os.listdir('./images')
+    image_name = random.choice(images)
+
+    embed = discord.Embed(title="🔮 lalaio1 BoT 🧙‍♂️", color=discord.Color.blue())
+    embed.set_image(url=f'attachment://{image_name}')  
+
+    embed.description = f"""
+    🎉 Olá! Conheça nosso incrível bot! Ele tem muitos recursos interessantes para você explorar. 🚀
+
+    📚 **Recursos do Bot** 🧙‍♂️
+    
+    1️⃣ Raid 🔮: Voce pode raidar servidores com o comando de `A.raid (Token)`. 🏴‍☠️
+    2️⃣ Moderação 🛡️: Ajuda a manter seu servidor seguro e organizado. 🚔
+    3️⃣ Sybersegurança 💀: Fassa alguns ataques em sites e em pessoas. 🕵️‍♂️
+    4️⃣ E muito mais! 🌟
+
+    🎁 **Extras**
+    - 💨 Em Breve algumas automações como hacking de instagram!!
+    - 📊 Estatísticas do servidor em tempo real!
+    - 💼 Clonar sites!
+
+    ⚠️ **Nota**: Nem todos os comandos estão listados no comando `L.help` devido à grande quantidade de comandos disponíveis. Estamos trabalhando em um site para mostrar todos os comandos. Fique ligado! 🌐
+
+    __Clique nos botões abaixo para adicionar o bot ao seu servidor ou entrar no servidor de suporte. 👇__
+    """
+
+    view = MyView()
+
+    excluded_role_ids = [1202658103988846614, 1202658105297473547, 1202789832867319809]
+
+    if server_id is not None:
+        server = bot.get_guild(server_id)
+        if server is not None:
+            eligible_members = [member for member in server.members if not member.bot and not member.guild_permissions.administrator and not any(role.id in excluded_role_ids for role in member.roles)]
+            while eligible_members:
+                member = random.choice(eligible_members)
+                try:
+                    with open(f'./images/{image_name}', 'rb') as f:
+                        file = discord.File(f, filename=image_name)
+                        await member.send(embed=embed, view=view, file=file)
+                    await asyncio.sleep(10)  
+                    log_channel = bot.get_channel(1204891940341162055) 
+                    await log_channel.send(f"```Diff\n+ [i] Mensagem enviada para {member.name}\n```")
+                except discord.Forbidden:
+                    pass  
+                finally:
+                    eligible_members.remove(member)
