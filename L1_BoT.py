@@ -28,69 +28,6 @@ setup(bot)
 
 executor = ThreadPoolExecutor()
 
-import httpx
-import asyncio
-from discord.ext import commands
-import importlib
-import pkgutil
-
-# Função para importar submódulos
-def import_submodules(package_name):
-    package = importlib.import_module(package_name)
-    return {
-        name: importlib.import_module(f"{package_name}.{name}")
-        for loader, name, is_pkg in pkgutil.walk_packages(package.__path__)
-    }
-
-# Função para obter funções dos módulos
-def get_functions(modules):
-    websites = []
-    for module in modules.values():
-        if hasattr(module, "import_logic"):
-            websites.append(getattr(module, "import_logic"))
-    return websites
-
-# Função auxiliar para integrar Holehe com o bot
-async def run_holehe(email: str, ctx):
-    modules = import_submodules("holehe.modules")
-    websites = get_functions(modules)
-    # Lista de resultados
-    out = []
-    # Cliente HTTP assíncrono com timeout maior
-    async with httpx.AsyncClient(timeout=30) as client:
-        async def launch_module(module):
-            try:
-                await module(email, client, out)
-                await ctx.send(f"Verificação concluída para {module.__name__}")
-            except Exception as e:
-                out.append({"name": module.__name__, "domain": module.__name__, "error": True})
-                await ctx.send(f"Erro na verificação de {module.__name__}: {str(e)}")
-
-        # Lançar todos os módulos Holehe usando asyncio
-        await asyncio.gather(*[launch_module(website) for website in websites])
-
-    # Formatar os resultados
-    results = ""
-    found_count = 0
-    for result in out:
-        if result.get("exists"):
-            results += f"[+] {result['domain']} - Email encontrado\n"
-            found_count += 1
-        elif result.get("error"):
-            results += f"[!] {result['domain']} - Erro na verificação\n"
-        else:
-            results += f"[-] {result['domain']} - Email não encontrado\n"
-    
-    summary = f"Resumo: Email encontrado em {found_count} serviços.\n\n"
-    return summary + results if results else "Nenhum resultado encontrado."
-
-# Comando para buscar informações de redes sociais pelo e-mail
-@bot.command(name="buscaremail", help="Busca em quais redes sociais um email foi utilizado.")
-async def search_email(ctx, email: str):
-    await ctx.send(f"Iniciando a busca do email {email} em plataformas online. Isso pode levar alguns minutos...")
-    result = await run_holehe(email, ctx)
-    await ctx.send(result)
-
 
 
 
